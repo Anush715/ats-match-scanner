@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ATS Match Scanner — see your resume the way a hiring bot does</title>
+<meta name="description" content="Paste a job description and your resume. Get a real match score and the exact keywords you're missing, in seconds." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper: #FBFAF7;
+    --card: #FFFFFF;
+    --ink: #1B2A4A;
+    --ink-soft: #5B6B85;
+    --highlighter: #FFD23F;
+    --highlighter-soft: #FFF1B8;
+    --miss: #FF6B5B;
+    --miss-soft: #FFE3DF;
+    --line: #DCD6C8;
+    --good: #2E7D5B;
+  }
+
+  *{ box-sizing: border-box; }
+
+  html{ scroll-behavior: smooth; }
+
+  body{
+    margin:0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Space Grotesk', system-ui, sans-serif;
+    line-height: 1.5;
+  }
+
+  .mono{ font-family: 'JetBrains Mono', monospace; }
+
+  a{ color: inherit; }
+
+  :focus-visible{
+    outline: 3px solid var(--highlighter);
+    outline-offset: 2px;
+  }
+
+  .wrap{
+    max-width: 920px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  /* ---------- header ---------- */
+  header{
+    border-bottom: 1px solid var(--line);
+    padding: 18px 0;
+  }
+  .header-row{
+    display:flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .author{
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--ink-soft);
+  }
+  .author strong{ color: var(--ink); font-weight: 600; }
+  .built-for{
+    display:inline-flex;
+    align-items:center;
+    gap:7px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px;
+    text-decoration:none;
+    color: var(--ink);
+    border: 1px solid var(--ink);
+    padding: 7px 12px;
+    border-radius: 999px;
+    transition: background .15s ease, color .15s ease;
+    white-space: nowrap;
+  }
+  .built-for:hover{ background: var(--ink); color: var(--paper); }
+  .built-for::before{ content:"●"; font-size:8px; color: var(--highlighter); }
+  .built-for:hover::before{ color: var(--highlighter); }
+
+  /* ---------- hero ---------- */
+  .hero{ padding: 56px 0 36px; }
+  .eyebrow{
+    font-family:'JetBrains Mono', monospace;
+    font-size: 12.5px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin-bottom: 14px;
+  }
+  h1{
+    font-size: clamp(32px, 5vw, 46px);
+    line-height: 1.08;
+    margin: 0 0 18px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+  h1 em{
+    font-style: normal;
+    background: linear-gradient(transparent 62%, var(--highlighter) 62%);
+  }
+  .sub{
+    font-size: 17px;
+    color: var(--ink-soft);
+    max-width: 62ch;
+    margin: 0;
+  }
+
+  /* ---------- input panel ---------- */
+  .panel{
+    margin-top: 40px;
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+  }
+  @media (max-width: 720px){
+    .panel{ grid-template-columns: 1fr; }
+  }
+  .upload-row{
+    display:flex;
+    align-items:center;
+    gap: 10px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+  }
+  .upload-btn{
+    font-family:'JetBrains Mono', monospace;
+    font-size: 12.5px;
+    border: 1px dashed var(--ink-soft);
+    color: var(--ink);
+    background: var(--card);
+    padding: 7px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: border-color .15s ease, background .15s ease;
+  }
+  .upload-btn:hover{ border-color: var(--ink); background: var(--highlighter-soft); }
+  #uploadStatus{ font-size: 12.5px; color: var(--ink-soft); }
+
+  .field label{
+    display:block;
+    font-family:'JetBrains Mono', monospace;
+    font-size: 12.5px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--ink-soft);
+    margin-bottom: 8px;
+  }
+  textarea{
+    width: 100%;
+    min-height: 220px;
+    resize: vertical;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--card);
+    color: var(--ink);
+    padding: 14px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 14.5px;
+    line-height: 1.5;
+  }
+  textarea::placeholder{ color: #A8A398; }
+  textarea:focus{ border-color: var(--ink); }
+
+  .scan-row{
+    margin-top: 22px;
+    display:flex;
+    align-items:center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  button.scan{
+    font-family:'JetBrains Mono', monospace;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: .03em;
+    background: var(--ink);
+    color: var(--paper);
+    border: none;
+    padding: 14px 26px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: transform .12s ease, background .15s ease;
+  }
+  button.scan:hover{ background: #2A3D63; }
+  button.scan:active{ transform: scale(.98); }
+  button.scan:disabled{ opacity: .5; cursor:not-allowed; }
+  .hint{
+    font-size: 13px;
+    color: var(--ink-soft);
+  }
+
+  /* ---------- results ---------- */
+  #results{
+    margin-top: 56px;
+    padding-top: 36px;
+    border-top: 1px solid var(--line);
+    display:none;
+  }
+  #results.show{ display:block; animation: fadeUp .45s ease both; }
+
+  @keyframes fadeUp{
+    from{ opacity:0; transform: translateY(10px); }
+    to{ opacity:1; transform: translateY(0); }
+  }
+
+  .score-block{
+    display:flex;
+    align-items:center;
+    gap: 28px;
+    flex-wrap: wrap;
+  }
+  .ring-wrap{ position: relative; width: 132px; height: 132px; flex: none; }
+  .ring-wrap svg{ transform: rotate(-90deg); width:100%; height:100%; }
+  .ring-bg{ fill:none; stroke: var(--line); stroke-width: 10; }
+  .ring-fg{
+    fill:none;
+    stroke: var(--highlighter);
+    stroke-width: 10;
+    stroke-linecap: round;
+    stroke-dasharray: 339.292;
+    stroke-dashoffset: 339.292;
+    transition: stroke-dashoffset 1s cubic-bezier(.2,.8,.2,1);
+  }
+  .ring-label{
+    position:absolute; inset:0;
+    display:flex; align-items:center; justify-content:center;
+    flex-direction: column;
+  }
+  .ring-label .num{
+    font-family:'JetBrains Mono', monospace;
+    font-size: 30px;
+    font-weight: 700;
+  }
+  .ring-label .pct{ font-size: 12px; color: var(--ink-soft); }
+
+  .score-text h2{
+    margin: 0 0 6px;
+    font-size: 21px;
+  }
+  .score-text p{
+    margin:0;
+    color: var(--ink-soft);
+    font-size: 14.5px;
+    max-width: 46ch;
+  }
+
+  .kw-section{ margin-top: 34px; }
+  .kw-section h3{
+    font-family:'JetBrains Mono', monospace;
+    font-size: 12.5px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--ink-soft);
+    margin: 0 0 12px;
+  }
+  .chips{ display:flex; flex-wrap:wrap; gap: 8px; }
+  .chip{
+    font-family:'JetBrains Mono', monospace;
+    font-size: 13px;
+    padding: 6px 11px;
+    border-radius: 999px;
+  }
+  .chip.match{ background: var(--highlighter-soft); color: #6B5300; border: 1px solid var(--highlighter); }
+  .chip.miss{ background: var(--miss-soft); color: #9C2E20; border: 1px solid var(--miss); }
+  .empty-note{ font-size: 13.5px; color: var(--ink-soft); }
+
+  .resume-preview{
+    margin-top: 34px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--card);
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .resume-preview pre{
+    margin:0;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 14.5px;
+    line-height: 1.7;
+    color: var(--ink);
+  }
+  .resume-preview mark{
+    background: var(--highlighter);
+    color: var(--ink);
+    border-radius: 3px;
+    padding: 0 2px;
+  }
+  .scan-line{
+    position:absolute;
+    left:0; right:0; top:0;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, var(--highlighter), transparent);
+    box-shadow: 0 0 14px 2px var(--highlighter);
+  }
+  #results.show .scan-line{
+    animation: sweep 1.1s cubic-bezier(.3,.7,.3,1) both;
+  }
+  @keyframes sweep{
+    from{ top: 0; opacity: 1; }
+    to{ top: 100%; opacity: 0; }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    #results.show, #results.show .scan-line, .ring-fg{ animation: none !important; transition: none !important; }
+  }
+
+  /* ---------- footer ---------- */
+  footer{
+    margin-top: 70px;
+    border-top: 1px solid var(--line);
+    padding: 22px 0 50px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    display:flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  footer a{ text-decoration: underline; text-underline-offset: 3px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap header-row">
+    <div class="author"><strong>Anushka Bansal</strong> · anush50217@gmail.com</div>
+    <a class="built-for" href="https://digitalheroesco.com" target="_blank" rel="noopener">Built for Digital Heroes</a>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="hero">
+    <div class="eyebrow">ATS Match Scanner</div>
+    <h1>See your resume<br>the way <em>a hiring bot</em> does.</h1>
+    <p class="sub">Paste a job description and your resume to see the keyword overlap a hiring system would detect. Matched terms are highlighted directly in your resume, with missing terms listed separately — everything runs in your browser, with nothing uploaded or stored.</p>
+  </section>
+
+  <section class="panel">
+    <div class="field">
+      <label for="jd">Job description</label>
+      <textarea id="jd" placeholder="Paste the full job description here..."></textarea>
+    </div>
+    <div class="field">
+      <label for="resume">Your resume</label>
+      <div class="upload-row">
+        <label class="upload-btn" for="resumeFile">Upload PDF</label>
+        <input type="file" id="resumeFile" accept="application/pdf" hidden />
+        <span id="uploadStatus" class="hint">or paste the text below</span>
+      </div>
+      <textarea id="resume" placeholder="Paste your resume text here, or upload a PDF above..."></textarea>
+    </div>
+  </section>
+
+  <div class="scan-row">
+    <button class="scan" id="scanBtn">Scan match →</button>
+    <span class="hint">Everything runs in your browser. Nothing is uploaded.</span>
+  </div>
+
+  <section id="results">
+    <div class="score-block">
+      <div class="ring-wrap">
+        <svg viewBox="0 0 120 120">
+          <circle class="ring-bg" cx="60" cy="60" r="54"></circle>
+          <circle class="ring-fg" id="ringFg" cx="60" cy="60" r="54"></circle>
+        </svg>
+        <div class="ring-label">
+          <div class="num mono" id="scoreNum">0</div>
+          <div class="pct">match</div>
+        </div>
+      </div>
+      <div class="score-text">
+        <h2 id="scoreHeadline">—</h2>
+        <p id="scoreSub">Run a scan to see how your resume lines up against this job description.</p>
+      </div>
+    </div>
+
+    <div class="kw-section">
+      <h3>Found in your resume</h3>
+      <div class="chips" id="matchChips"></div>
+    </div>
+
+    <div class="kw-section">
+      <h3>Missing from your resume</h3>
+      <div class="chips" id="missChips"></div>
+    </div>
+
+    <div class="kw-section">
+      <h3>Your resume, annotated</h3>
+      <div class="resume-preview">
+        <div class="scan-line"></div>
+        <pre id="resumePreview"></pre>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="wrap">
+  <span>Built using Claude · Deployed on Vercel · Zero backend, zero data leaves your browser</span>
+  <span><a href="https://github.com/Anush715" target="_blank" rel="noopener">github.com/Anush715</a></span>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+(function(){
+  if (window.pdfjsLib) {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  }
+
+  async function extractTextFromPdf(file){
+    const buf = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+    let text = '';
+    for(let i = 1; i <= pdf.numPages; i++){
+      const page = await pdf.getPage(i);
+      const content = await page.getTextContent();
+      text += content.items.map(it => it.str).join(' ') + '\n';
+    }
+    return text.trim();
+  }
+
+  const resumeFileInput = document.getElementById('resumeFile');
+  const uploadStatus = document.getElementById('uploadStatus');
+  const resumeTextarea = document.getElementById('resume');
+
+  resumeFileInput.addEventListener('change', async function(e){
+    const file = e.target.files[0];
+    if(!file) return;
+    uploadStatus.textContent = 'Reading ' + file.name + '...';
+    try{
+      const text = await extractTextFromPdf(file);
+      if(!text){
+        uploadStatus.textContent = 'Could not find readable text in this PDF — it may be a scanned image. Try pasting the text instead.';
+        return;
+      }
+      resumeTextarea.value = text;
+      uploadStatus.textContent = 'Loaded text from ' + file.name + ' — feel free to edit it below before scanning.';
+    }catch(err){
+      uploadStatus.textContent = 'Could not read this PDF. Try pasting the text instead.';
+    }
+  });
+})();
+</script>
+<script>
+(function(){
+  const STOPWORDS = new Set(("a,an,the,and,or,but,if,then,so,as,at,by,for,from,in,into,of,on,onto,to,with,within,without,"+
+    "is,are,was,were,be,been,being,this,that,these,those,it,its,you,your,we,our,they,their,he,she,his,her,"+
+    "will,would,can,could,should,shall,may,might,must,have,has,had,do,does,did,not,no,yes,"+
+    "we're,you'll,about,across,after,all,also,any,both,each,etc,etc.,more,most,other,such,than,"+
+    "experience,experienced,years,year,role,roles,team,teams,work,working,strong,good,excellent,ability,"+
+    "including,responsibilities,responsibility,requirements,required,preferred,plus,using,use,used,"+
+    "skills,skill,job,description,company,candidate,candidates,looking,join,opportunity").split(","));
+
+  function extractKeywords(text){
+    const tokens = (text.toLowerCase().match(/[a-z][a-z0-9+#./-]{1,}/g) || []);
+    const freq = {};
+    tokens.forEach(t => {
+      const clean = t.replace(/^[-./]+|[-./]+$/g,'');
+      if(clean.length < 3) return;
+      if(STOPWORDS.has(clean)) return;
+      if(/^\d+$/.test(clean)) return;
+      freq[clean] = (freq[clean]||0) + 1;
+    });
+    return Object.entries(freq)
+      .sort((a,b) => b[1]-a[1])
+      .slice(0, 22)
+      .map(e => e[0]);
+  }
+
+  function escapeRe(s){ return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+
+  function singularVariants(word){
+    const variants = new Set([word]);
+    if(word.endsWith('ies')) variants.add(word.slice(0,-3)+'y');
+    if(word.endsWith('es')) variants.add(word.slice(0,-2));
+    if(word.endsWith('s')) variants.add(word.slice(0,-1));
+    variants.add(word+'s');
+    return [...variants];
+  }
+
+  function findMatches(keywords, resumeLower){
+    const matched = [], missing = [];
+    keywords.forEach(k => {
+      const variants = singularVariants(k);
+      const found = variants.some(v => new RegExp('\\b'+escapeRe(v)+'\\b','i').test(resumeLower));
+      (found ? matched : missing).push(k);
+    });
+    return { matched, missing };
+  }
+
+  function highlightResume(resumeOriginal, matched){
+    let html = resumeOriginal.replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+    const allVariants = [];
+    matched.forEach(k => singularVariants(k).forEach(v => { if(v.length>=3) allVariants.push(v); }));
+    const uniqueSorted = [...new Set(allVariants)].sort((a,b)=>b.length-a.length);
+    uniqueSorted.forEach(v => {
+      const re = new RegExp('\\b('+escapeRe(v)+')\\b','gi');
+      html = html.replace(re, m => '§MARK§'+m+'§ENDMARK§');
+    });
+    html = html.split('§MARK§').join('<mark>').split('§ENDMARK§').join('</mark>');
+    return html;
+  }
+
+  function renderChips(container, words, cls, emptyMsg){
+    container.innerHTML = '';
+    if(words.length === 0){
+      const p = document.createElement('div');
+      p.className = 'empty-note';
+      p.textContent = emptyMsg;
+      container.appendChild(p);
+      return;
+    }
+    words.forEach(w => {
+      const span = document.createElement('span');
+      span.className = 'chip ' + cls;
+      span.textContent = w;
+      container.appendChild(span);
+    });
+  }
+
+  const scanBtn = document.getElementById('scanBtn');
+  const results = document.getElementById('results');
+
+  scanBtn.addEventListener('click', function(){
+    const jdText = document.getElementById('jd').value.trim();
+    const resumeText = document.getElementById('resume').value.trim();
+
+    if(!jdText || !resumeText){
+      alert('Paste both the job description and your resume to run a scan.');
+      return;
+    }
+
+    const keywords = extractKeywords(jdText);
+    const resumeLower = resumeText.toLowerCase();
+    const { matched, missing } = findMatches(keywords, resumeLower);
+    const score = keywords.length ? Math.round((matched.length / keywords.length) * 100) : 0;
+
+    document.getElementById('scoreNum').textContent = score;
+    const circumference = 339.292;
+    const offset = circumference - (circumference * score / 100);
+    requestAnimationFrame(() => {
+      document.getElementById('ringFg').style.strokeDashoffset = offset;
+    });
+
+    let headline, sub;
+    if(score >= 75){ headline = "Strong match."; sub = "Your resume already covers most of what this job description is asking for."; }
+    else if(score >= 45){ headline = "Decent overlap, room to tighten."; sub = "You're covering a fair amount — closing the gap below could meaningfully help."; }
+    else { headline = "Big gap between the two."; sub = "Worth deciding which missing terms genuinely apply to you, and adding them in your own words."; }
+    document.getElementById('scoreHeadline').textContent = headline;
+    document.getElementById('scoreSub').textContent = sub;
+
+    renderChips(document.getElementById('matchChips'), matched, 'match', 'No overlapping keywords found yet.');
+    renderChips(document.getElementById('missChips'), missing, 'miss', 'Nothing missing — strong coverage.');
+
+    document.getElementById('resumePreview').innerHTML = highlightResume(resumeText, matched);
+
+    results.classList.remove('show');
+    void results.offsetWidth;
+    results.classList.add('show');
+    results.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+})();
+</script>
+
+</body>
+</html>
